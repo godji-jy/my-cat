@@ -1,252 +1,528 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Cat Feeder Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>โภชนา — แดชบอร์ดเครื่องให้อาหารสัตว์เลี้ยง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #EFEAE0;
+    --surface: #FFFDF9;
+    --ink: #262319;
+    --ink-soft: #6E6858;
+    --line: #E2DAC6;
+    --amber: #C0872F;
+    --amber-deep: #8C5E1E;
+    --amber-pale: #F1DEB6;
+    --teal: #3E6B5E;
+    --teal-pale: #DCEAE3;
+    --brick: #AE4530;
+    --brick-pale: #F3DBD3;
+    --radius-lg: 22px;
+    --radius-md: 14px;
+    --shadow: 0 1px 2px rgba(38,35,25,0.06), 0 8px 24px -12px rgba(38,35,25,0.18);
+  }
+
+  *{ box-sizing: border-box; }
+  html{ -webkit-text-size-adjust: 100%; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(38,35,25,0.05) 1px, transparent 0);
+    background-size: 22px 22px;
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 20px 16px 60px;
+  }
+
+  .page{ max-width: 960px; margin: 0 auto; }
+
+  /* ---------- Topbar ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap: 12px; flex-wrap: wrap;
+    padding: 4px 2px 22px;
+  }
+  .brand{ display:flex; align-items:center; gap: 12px; }
+  .brand-mark{
+    width: 40px; height: 40px; border-radius: 12px;
+    background: linear-gradient(155deg, var(--amber), var(--amber-deep));
+    display:flex; align-items:center; justify-content:center;
+    font-size: 19px; flex-shrink: 0;
+    box-shadow: var(--shadow);
+  }
+  .brand-name{
+    font-family:'Space Grotesk', sans-serif; font-weight:700;
+    font-size: 19px; margin: 0; letter-spacing: -0.01em;
+  }
+  .brand-name .thin{ font-weight: 500; color: var(--ink-soft); }
+  .brand-sub{ margin: 1px 0 0; font-size: 12.5px; color: var(--ink-soft); }
+
+  .status-pill{
+    display:flex; align-items:center; gap:8px;
+    background: var(--surface); border:1px solid var(--line);
+    padding: 7px 14px 7px 10px; border-radius: 999px;
+    font-size: 13px; font-weight: 500; box-shadow: var(--shadow);
+  }
+  .dot{
+    width:8px; height:8px; border-radius:50%; background: var(--teal);
+    box-shadow: 0 0 0 3px var(--teal-pale);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  .dot.offline{ background: var(--brick); box-shadow: 0 0 0 3px var(--brick-pale); }
+  @keyframes pulse{
+    0%,100%{ opacity:1; } 50%{ opacity:.45; }
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    display:grid; grid-template-columns: 1fr; gap: 18px;
+  }
+  @media (min-width: 760px){
+    .hero{ grid-template-columns: 300px 1fr; align-items: stretch; }
+  }
+
+  .gauge-card{
+    background: var(--surface); border:1px solid var(--line);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow);
+    padding: 26px 20px 20px; display:flex; flex-direction:column; align-items:center;
+    gap: 6px;
+  }
+  .gauge-wrap{ position:relative; width: 200px; }
+  .gauge-wrap svg{ width:100%; height:auto; display:block; }
+  .gauge-readout{
+    position:absolute; left:0; right:0; top: 58%;
+    display:flex; flex-direction:column; align-items:center;
+    pointer-events:none;
+  }
+  .gauge-percent{
+    font-family:'IBM Plex Mono', monospace; font-weight:600;
+    font-size: 34px; line-height:1; color: var(--ink);
+  }
+  .gauge-label{ font-size: 12px; color: var(--ink-soft); margin-top:4px; }
+  .gauge-caption{ font-size:12.5px; color: var(--ink-soft); text-align:center; max-width: 200px; }
+
+  /* ---------- Hero side ---------- */
+  .hero-side{ display:flex; flex-direction:column; gap: 14px; }
+
+  .alert{
+    display:none;
+    align-items:center; gap:10px;
+    background: var(--brick-pale); color: var(--brick);
+    border: 1px solid #E2B8AB; border-radius: var(--radius-md);
+    padding: 12px 14px; font-size: 13.5px; font-weight: 500;
+  }
+  .alert.show{ display:flex; }
+  .alert-dot{ width:7px; height:7px; border-radius:50%; background:var(--brick); flex-shrink:0; }
+
+  .action-row{
+    background: var(--surface); border:1px solid var(--line);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow);
+    padding: 18px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  }
+  .feed-btn{
+    appearance:none; border:none; cursor:pointer;
+    background: linear-gradient(160deg, var(--amber), var(--amber-deep));
+    color: #FFF9EE; font-family:'Space Grotesk', sans-serif;
+    font-weight:600; font-size: 15px;
+    padding: 14px 22px; border-radius: 14px;
+    display:flex; align-items:center; gap:10px;
+    box-shadow: 0 6px 16px -6px rgba(140,94,30,0.55);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .feed-btn:hover{ transform: translateY(-1px); box-shadow: 0 8px 20px -6px rgba(140,94,30,0.6); }
+  .feed-btn:active{ transform: translateY(0px) scale(.98); }
+  .feed-btn:disabled{ opacity:.6; cursor:progress; transform:none; }
+  .feed-btn-icon{ font-size:18px; }
+  .feed-hint{ margin:0; font-size:13px; color: var(--ink-soft); }
+  .feed-hint b, .feed-hint strong{ color: var(--ink); font-family:'IBM Plex Mono', monospace; font-weight:600; }
+
+  .stat-grid{
+    display:grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  }
+  @media (max-width: 520px){ .stat-grid{ grid-template-columns: 1fr 1fr; } }
+
+  .stat-card{
+    background: var(--surface); border:1px solid var(--line);
+    border-radius: var(--radius-md); box-shadow: var(--shadow);
+    padding: 14px 14px 12px;
+  }
+  .stat-label{ margin:0 0 6px; font-size:11.5px; color: var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; }
+  .stat-value{ margin:0; font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:16px; }
+
+  /* ---------- Schedule ---------- */
+  .section{ margin-top: 30px; }
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px; }
+  .section-title{ font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:16px; margin:0; }
+  .section-note{ font-size:12px; color:var(--ink-soft); margin:0; }
+
+  .schedule-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .schedule-item{
+    display:flex; align-items:center; gap:14px;
+    background: var(--surface); border:1px solid var(--line);
+    border-radius: var(--radius-md); padding: 12px 16px;
+    box-shadow: var(--shadow);
+  }
+  .schedule-time{
+    font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:15px;
+    min-width: 58px;
+  }
+  .schedule-bar{ flex:1; height:1px; background: var(--line); }
+  .schedule-state{
+    font-size:12px; font-weight:500; padding:4px 10px; border-radius:999px;
+    white-space:nowrap;
+  }
+  .schedule-state.done{ background: var(--teal-pale); color: var(--teal); }
+  .schedule-state.next{ background: var(--amber-pale); color: var(--amber-deep); }
+  .schedule-state.pending{ background: var(--line); color: var(--ink-soft); }
+
+  footer{
+    margin-top: 34px; text-align:center;
+    font-size: 12px; color: var(--ink-soft);
+  }
+  footer span{ font-family:'IBM Plex Mono', monospace; }
+
+  @media (prefers-reduced-motion: reduce){
+    .dot{ animation: none; }
+    .feed-btn{ transition:none; }
+  }
+</style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased">
+<body>
+<div class="page">
 
-    <nav class="bg-pink-500 text-white shadow-md shadow-pink-100">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <i class="fa-solid fa-cat text-2xl animate-bounce"></i>
-                <span class="text-xl font-bold tracking-wide">Smart Cat Feeder</span>
-            </div>
-            <div class="flex items-center space-x-2">
-                <span class="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-                <span class="text-sm font-medium opacity-90">Firebase Connected</span>
-            </div>
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">🐾</div>
+      <div>
+        <p class="brand-name">โภชนา <span class="thin">· Feeder</span></p>
+        <p class="brand-sub">เครื่องให้อาหารอัตโนมัติ · ห้องครัว</p>
+      </div>
+    </div>
+    <div class="status-pill">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">กำลังเชื่อมต่อ…</span>
+    </div>
+  </div>
+
+  <section class="hero">
+    <div class="gauge-card">
+      <div class="gauge-wrap">
+        <svg viewBox="0 0 240 220" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <clipPath id="bowlClip">
+              <path d="M22,42 C22,20 218,20 218,42 L207,152 C202,192 152,206 120,206 C88,206 38,192 33,152 Z"/>
+            </clipPath>
+            <linearGradient id="kibbleGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#D6A24D"/>
+              <stop offset="100%" stop-color="#A96F26"/>
+            </linearGradient>
+            <pattern id="kibblePattern" width="16" height="16" patternUnits="userSpaceOnUse">
+              <circle cx="3" cy="4" r="1.6" fill="#8C5E1E" opacity="0.35"/>
+              <circle cx="11" cy="10" r="1.3" fill="#F1DEB6" opacity="0.4"/>
+              <circle cx="8" cy="1" r="1" fill="#8C5E1E" opacity="0.25"/>
+            </pattern>
+          </defs>
+
+          <!-- bowl rim + body outline -->
+          <path d="M22,42 C22,20 218,20 218,42 L207,152 C202,192 152,206 120,206 C88,206 38,192 33,152 Z"
+                fill="#FBF7EE" stroke="#DCCFA9" stroke-width="2"/>
+
+          <!-- fill (clipped to bowl shape) -->
+          <g id="fillGroup" clip-path="url(#bowlClip)">
+            <rect x="10" y="60" width="220" height="200" fill="url(#kibbleGradient)"/>
+            <rect x="10" y="60" width="220" height="200" fill="url(#kibblePattern)"/>
+            <g transform="translate(0,60)">
+              <path id="wavePath" d="M-20,0 Q 10,-6 40,0 T 100,0 T 160,0 T 220,0 T 280,0 L280,16 L-20,16 Z"
+                    fill="#D6A24D">
+                <animateTransform attributeName="transform" type="translate"
+                  from="0 0" to="-60 0" dur="3.2s" repeatCount="indefinite"/>
+              </path>
+            </g>
+          </g>
+
+          <!-- rim highlight on top -->
+          <ellipse cx="120" cy="42" rx="98" ry="13" fill="none" stroke="#E9DCB8" stroke-width="2" opacity="0.9"/>
+        </svg>
+        <div class="gauge-readout">
+          <span class="gauge-percent" id="percentText">--%</span>
+          <span class="gauge-label">อาหารคงเหลือ</span>
         </div>
-    </nav>
+      </div>
+      <p class="gauge-caption" id="gaugeCaption">กำลังอ่านค่าจากเซ็นเซอร์…</p>
+    </div>
 
-    <main class="max-w-6xl mx-auto px-4 py-8">
-        
-        <div id="alert-box" class="hidden mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg text-red-700 flex items-start space-x-3 shadow-sm">
-            <i class="fa-solid fa-triangle-exclamation text-xl mt-0.5"></i>
-            <div>
-                <h3 class="font-bold">แจ้งเตือน: อาหารแมวหมดถัง!</h3>
-                <p class="text-sm opacity-90">ปริมาณอาหารในถังต่ำกว่าเกณฑ์วิกฤต กรุณาเติมอาหารให้น้องแมวโดยเร็ว</p>
-            </div>
+    <div class="hero-side">
+      <div class="alert" id="alertBanner">
+        <span class="alert-dot"></span>
+        <span>อาหารเหลือน้อย — กรุณาเติมอาหารในถังเร็ว ๆ นี้</span>
+      </div>
+
+      <div class="action-row">
+        <button class="feed-btn" id="feedBtn">
+          <span class="feed-btn-icon">🍚</span>
+          <span id="feedBtnLabel">ให้อาหารตอนนี้</span>
+        </button>
+        <p class="feed-hint">มื้อละ <strong id="portionText">30</strong> กรัม</p>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <p class="stat-label">ให้อาหารล่าสุด</p>
+          <p class="stat-value" id="lastFeedTime">--:--</p>
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-bold text-slate-700">ปริมาณอาหารคงเหลือ</h2>
-                        <i class="fa-solid fa-chart-pie text-pink-500 text-xl"></i>
-                    </div>
-                    
-                    <div class="space-y-2 mt-6">
-                        <div class="flex justify-between items-baseline">
-                            <span id="food-level-text" class="text-5xl font-black text-slate-900 tracking-tight">0%</span>
-                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">HC-SR04 Sensor</span>
-                        </div>
-                        
-                        <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
-                            <div id="food-progress-bar" class="bg-pink-500 h-full w-0 transition-all duration-500 ease-out"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500 flex items-center space-x-1.5">
-                    <i class="fa-solid fa-clock"></i>
-                    <span>อัปเดตล่าสุด: </span>
-                    <span id="last-update-text" class="font-medium">กำลังโหลด...</span>
-                </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-bold text-slate-700">ควบคุมการจ่ายอาหาร</h2>
-                        <i class="fa-solid fa-sliders text-pink-500 text-xl"></i>
-                    </div>
-                    
-                    <p class="text-sm text-slate-500 mb-6">กดสั่งให้ Servo Motor หมุนเปิดช่องจ่ายอาหารเม็ดให้น้องแมวจากระยะไกลแบบเรียลไทม์</p>
-                    
-                    <button id="feed-btn" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-pink-100 transition-all duration-150 flex items-center justify-center space-x-2 active:scale-[0.98]">
-                        <i class="fa-solid fa-fish"></i>
-                        <span>ให้อาหารตอนนี้ (Manual Feed)</span>
-                    </button>
-                </div>
-
-                <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500 flex justify-between items-center">
-                    <div class="flex items-center space-x-1.5">
-                        <i class="fa-solid fa-utensils"></i>
-                        <span>จ่ายอาหารให้แมวล่าสุด:</span>
-                    </div>
-                    <span id="last-fed-text" class="font-semibold text-pink-600">--:--</span>
-                </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-bold text-slate-700">ตั้งเวลาให้อาหาร</h2>
-                        <i class="fa-solid fa-calendar-days text-pink-500 text-xl"></i>
-                    </div>
-                    
-                    <div class="flex space-x-2 mb-4">
-                        <input type="time" id="schedule-time" class="flex-1 px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 text-slate-700 font-medium">
-                        <button id="add-schedule-btn" class="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-xl font-bold transition-colors flex items-center justify-center">
-                            <i class="fa-solid fa-plus"></i>
-                        </button>
-                    </div>
-
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">รายการเวลาที่ตั้งไว้</p>
-                    <ul id="schedule-list" class="space-y-2 max-h-36 overflow-y-auto pr-1">
-                        <li class="text-xs text-slate-400 text-center py-4">กำลังโหลดตารางเวลา...</li>
-                    </ul>
-                </div>
-
-                <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-400 flex items-center space-x-1">
-                    <i class="fa-solid fa-circle-info"></i>
-                    <span>ESP32 จะจ่ายอาหารอัตโนมัติตามเวลานี้</span>
-                </div>
-            </div>
-
+        <div class="stat-card">
+          <p class="stat-label">มื้อถัดไป</p>
+          <p class="stat-value" id="nextFeedTime">--:--</p>
         </div>
-    </main>
+        <div class="stat-card">
+          <p class="stat-label">สัญญาณ WiFi</p>
+          <p class="stat-value" id="wifiRssi">-- dBm</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue, update, push, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  <section class="section">
+    <div class="section-head">
+      <p class="section-title">ตารางให้อาหารวันนี้</p>
+      <p class="section-note" id="scheduleNote">3 มื้อ / วัน</p>
+    </div>
+    <ul class="schedule-list" id="scheduleList"></ul>
+  </section>
 
-        // ⚠️ นำรายละเอียดคอนฟิกจาก Firebase Console ของคุณมาใส่ที่นี่
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            databaseURL: "YOUR_DATABASE_URL",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
+  <footer>
+    ซิงค์ล่าสุด <span id="lastSync">--</span> &nbsp;·&nbsp; <span id="connMode">โหมดสาธิต</span>
+  </footer>
 
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
+</div>
 
-        // References
-        const feederRef = ref(database, 'cat_feeder');
-        const schedulesRef = ref(database, 'cat_feeder/schedules');
+<script>
+/* ==========================================================
+   ตั้งค่าการเชื่อมต่อ Firebase ของคุณตรงนี้
+   ถ้ายังไม่กรอกค่าจริง หน้านี้จะรันในโหมดสาธิต (จำลองข้อมูล)
+   โครงสร้างฐานข้อมูลตรงกับ firmware ในไฟล์ smart_pet_feeder.ino
+   ========================================================== */
+const FIREBASE_CONFIG = {
+  apiKey: "YOUR_FIREBASE_WEB_API_KEY",
+  databaseURL: "YOUR_FIREBASE_DATABASE_URL",
+};
 
-        // DOM Elements
-        const foodLevelText = document.getElementById('food-level-text');
-        const foodProgressBar = document.getElementById('food-progress-bar');
-        const alertBox = document.getElementById('alert-box');
-        const feedBtn = document.getElementById('feed-btn');
-        const lastFedText = document.getElementById('last-fed-text');
-        const lastUpdateText = document.getElementById('last-update-text');
-        const scheduleTimeInput = document.getElementById('schedule-time');
-        const addScheduleBtn = document.getElementById('add-schedule-btn');
-        const scheduleList = document.getElementById('schedule-list');
+const isConfigured = !FIREBASE_CONFIG.apiKey.startsWith("YOUR_");
 
-        // 1. ดึงข้อมูลสถานะตัวเครื่องหลักแบบ Realtime
-        onValue(feederRef, (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                const level = data.food_level !== undefined ? data.food_level : 0;
-                foodLevelText.innerText = `${level}%`;
-                foodProgressBar.style.width = `${level}%`;
+// ---------- DOM refs ----------
+const el = {
+  statusDot: document.getElementById('statusDot'),
+  statusText: document.getElementById('statusText'),
+  percentText: document.getElementById('percentText'),
+  gaugeCaption: document.getElementById('gaugeCaption'),
+  alertBanner: document.getElementById('alertBanner'),
+  feedBtn: document.getElementById('feedBtn'),
+  feedBtnLabel: document.getElementById('feedBtnLabel'),
+  portionText: document.getElementById('portionText'),
+  lastFeedTime: document.getElementById('lastFeedTime'),
+  nextFeedTime: document.getElementById('nextFeedTime'),
+  wifiRssi: document.getElementById('wifiRssi'),
+  scheduleList: document.getElementById('scheduleList'),
+  scheduleNote: document.getElementById('scheduleNote'),
+  lastSync: document.getElementById('lastSync'),
+  connMode: document.getElementById('connMode'),
+  fillGroup: document.getElementById('fillGroup'),
+};
 
-                if (level <= 20) {
-                    foodProgressBar.className = "h-full bg-red-500 transition-all duration-500 ease-out";
-                    alertBox.classList.remove('hidden');
-                } else if (level <= 50) {
-                    foodProgressBar.className = "h-full bg-amber-500 transition-all duration-500 ease-out";
-                    alertBox.classList.add('hidden');
-                } else {
-                    foodProgressBar.className = "h-full bg-emerald-500 transition-all duration-500 ease-out";
-                    alertBox.classList.add('hidden');
-                }
+const GAUGE_TOP = 42, GAUGE_BOTTOM = 205, GAUGE_RANGE = GAUGE_BOTTOM - GAUGE_TOP;
+let displayedPercent = 0;
 
-                if (data.last_fed) {
-                    lastFedText.innerText = data.last_fed;
-                }
+function setGaugeLevel(targetPercent){
+  targetPercent = Math.max(0, Math.min(100, targetPercent));
+  const start = displayedPercent;
+  const startTime = performance.now();
+  const duration = 900;
 
-                const now = new Date();
-                lastUpdateText.innerText = now.toLocaleTimeString('th-TH');
-            }
-        });
+  // rect/wave เริ่มต้นอยู่ที่ y=60 ในกลุ่ม fillGroup;
+  // เลื่อนกลุ่มขึ้น-ลงเพื่อให้ขอบบนของอาหารไปอยู่ที่ตำแหน่งจริงตาม % ในชาม
+  function frame(now){
+    const t = Math.min(1, (now - startTime) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const value = start + (targetPercent - start) * eased;
+    const targetY = GAUGE_TOP + GAUGE_RANGE * (1 - value / 100);
+    const translateY = targetY - 60;
+    el.fillGroup.setAttribute('transform', `translate(0, ${translateY})`);
+    el.percentText.textContent = Math.round(value) + '%';
 
-        // 2. ดึงข้อมูลตารางเวลา (Schedules) มาแสดงผลและรองรับการลบข้อมูล
-        onValue(schedulesRef, (snapshot) => {
-            scheduleList.innerHTML = '';
-            const data = snapshot.val();
-            
-            if (data) {
-                Object.entries(data).forEach(([key, time]) => {
-                    const li = document.createElement('li');
-                    li.className = "flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 text-sm font-medium text-slate-700 animate-fade-in";
-                    
-                    const timeInfo = document.createElement('div');
-                    timeInfo.className = "flex items-center space-x-2";
-                    timeInfo.innerHTML = `<i class="fa-regular fa-clock text-pink-500"></i> <span class="font-semibold">${time} น.</span>`;
-                    
-                    const delBtn = document.createElement('button');
-                    delBtn.className = "text-slate-400 hover:text-red-500 transition-colors p-1";
-                    delBtn.innerHTML = `<i class="fa-solid fa-trash-can"></i>`;
-                    
-                    // เมื่อกดลบเวลา
-                    delBtn.addEventListener('click', () => {
-                        const specificScheduleRef = ref(database, `cat_feeder/schedules/${key}`);
-                        remove(specificScheduleRef);
-                    });
-                    
-                    li.appendChild(timeInfo);
-                    li.appendChild(delBtn);
-                    scheduleList.appendChild(li);
-                });
-            } else {
-                scheduleList.innerHTML = '<li class="text-xs text-slate-400 text-center py-6">ยังไม่มีการตั้งเวลาให้อาหาร</li>';
-            }
-        });
+    if (t < 1){ requestAnimationFrame(frame); }
+    else { displayedPercent = targetPercent; }
+  }
+  requestAnimationFrame(frame);
 
-        // 3. ฟังก์ชันกดเพิ่มเวลาเข้า Firebase
-        addScheduleBtn.addEventListener('click', () => {
-            const timeValue = scheduleTimeInput.value;
-            if (!timeValue) {
-                alert("กรุณาเลือกเวลาก่อนกดเพิ่มครับ");
-                return;
-            }
+  const isLow = targetPercent <= 15;
+  el.alertBanner.classList.toggle('show', isLow);
+  el.gaugeCaption.textContent = isLow
+    ? 'ระดับต่ำกว่าเกณฑ์ที่ตั้งไว้ (15%)'
+    : 'อ่านค่าจากเซ็นเซอร์ HC-SR04 ทุก 5 วินาที';
+}
 
-            // ส่งข้อมูลเวลาขึ้น Firebase ใน Node 'schedules'
-            push(schedulesRef, timeValue)
-                .then(() => {
-                    scheduleTimeInput.value = ''; // เคลียร์ช่องอินพุตเมื่อเพิ่มเสร็จ
-                })
-                .catch((error) => {
-                    alert("เกิดข้อผิดพลาดในการบันทึกเวลา: " + error.message);
-                });
-        });
+function formatTime(date){
+  return date.toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' });
+}
 
-        // 4. ปุ่มสั่งจ่ายอาหารทันที (Manual Feed)
-        feedBtn.addEventListener('click', () => {
-            feedBtn.disabled = true;
-            feedBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            const originalContent = feedBtn.innerHTML;
-            feedBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>กำลังเรียกน้องแมวกินข้าว...</span>`;
+function renderSchedule(times, doneFlags, nowDate){
+  el.scheduleList.innerHTML = '';
+  el.scheduleNote.textContent = times.length + ' มื้อ / วัน';
 
-            update(feederRef, {
-                feed_command: true
-            }).then(() => {
-                setTimeout(() => {
-                    feedBtn.disabled = false;
-                    feedBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    feedBtn.innerHTML = originalContent;
-                }, 2000);
-            }).catch((error) => {
-                alert("เกิดข้อผิดพลาด: " + error.message);
-                feedBtn.disabled = false;
-                feedBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                feedBtn.innerHTML = originalContent;
-            });
-        });
-    </script>
+  const nowMinutes = nowDate.getHours() * 60 + nowDate.getMinutes();
+  let nextIndex = -1;
+  times.forEach((t, i) => {
+    if (!doneFlags[i] && t.h * 60 + t.m >= nowMinutes && nextIndex === -1) nextIndex = i;
+  });
+  if (nextIndex === -1) {
+    const pendingIdx = doneFlags.findIndex(d => !d);
+    nextIndex = pendingIdx;
+  }
+
+  times.forEach((t, i) => {
+    const li = document.createElement('li');
+    li.className = 'schedule-item';
+    const state = doneFlags[i] ? 'done' : (i === nextIndex ? 'next' : 'pending');
+    const label = doneFlags[i] ? 'ให้แล้ว' : (i === nextIndex ? 'มื้อถัดไป' : 'รอเวลา');
+    li.innerHTML = `
+      <span class="schedule-time">${String(t.h).padStart(2,'0')}:${String(t.m).padStart(2,'0')}</span>
+      <span class="schedule-bar"></span>
+      <span class="schedule-state ${state}">${label}</span>
+    `;
+    el.scheduleList.appendChild(li);
+  });
+
+  if (nextIndex >= 0) {
+    const nt = times[nextIndex];
+    el.nextFeedTime.textContent = `${String(nt.h).padStart(2,'0')}:${String(nt.m).padStart(2,'0')}`;
+  } else {
+    el.nextFeedTime.textContent = 'พรุ่งนี้';
+  }
+}
+
+function setOnline(online){
+  el.statusDot.classList.toggle('offline', !online);
+  el.statusText.textContent = online ? 'ออนไลน์' : 'ขาดการเชื่อมต่อ';
+}
+
+/* ==========================================================
+   โหมดสาธิต — ใช้เมื่อยังไม่ได้กรอกค่า Firebase จริงด้านบน
+   ========================================================== */
+function startDemoMode(){
+  el.connMode.textContent = 'โหมดสาธิต (ยังไม่เชื่อม Firebase)';
+  setOnline(true);
+
+  const schedule = [{h:8,m:0},{h:12,m:0},{h:18,m:0}];
+  let doneFlags = schedule.map(t => {
+    const now = new Date();
+    return (t.h*60+t.m) < (now.getHours()*60 + now.getMinutes());
+  });
+
+  let percent = 62;
+  let portion = 30;
+  let wifi = -54;
+  let lastFeed = new Date(new Date().setHours(schedule[0].h, schedule[0].m, 0));
+
+  function tick(){
+    percent = Math.max(4, percent - (Math.random()*0.6));
+    wifi = -50 - Math.round(Math.random()*18);
+    const now = new Date();
+    setGaugeLevel(percent);
+    el.wifiRssi.textContent = wifi + ' dBm';
+    el.lastSync.textContent = formatTime(now);
+    renderSchedule(schedule, doneFlags, now);
+  }
+
+  el.portionText.textContent = portion;
+  el.lastFeedTime.textContent = formatTime(lastFeed);
+  tick();
+  setInterval(tick, 4000);
+
+  el.feedBtn.addEventListener('click', () => {
+    el.feedBtn.disabled = true;
+    el.feedBtnLabel.textContent = 'กำลังจ่ายอาหาร…';
+    setTimeout(() => {
+      percent = Math.max(4, percent - 1.5); // ถังพร่องลงเล็กน้อยหลังตักจ่าย
+      lastFeed = new Date();
+      el.lastFeedTime.textContent = formatTime(lastFeed);
+      const idx = doneFlags.findIndex(d => !d);
+      if (idx >= 0) doneFlags[idx] = true;
+      renderSchedule(schedule, doneFlags, new Date());
+      setGaugeLevel(percent);
+      el.feedBtn.disabled = false;
+      el.feedBtnLabel.textContent = 'ให้อาหารตอนนี้';
+    }, 1200);
+  });
+}
+
+/* ==========================================================
+   โหมดเชื่อมต่อ Firebase จริง
+   อ่าน /feeder/status, /feeder/config, /feeder/schedule
+   เขียนคำสั่งไปที่ /feeder/commands/feed_now
+   ========================================================== */
+function startFirebaseMode(){
+  el.connMode.textContent = 'เชื่อมต่อ Firebase';
+
+  const script1 = document.createElement('script');
+  script1.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js';
+  const script2 = document.createElement('script');
+  script2.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js';
+
+  script2.onload = () => {
+    const app = firebase.initializeApp(FIREBASE_CONFIG);
+    const db = firebase.database();
+
+    db.ref('.info/connected').on('value', snap => setOnline(snap.val() === true));
+
+    db.ref('/feeder/status').on('value', snap => {
+      const s = snap.val() || {};
+      if (typeof s.food_percent === 'number') setGaugeLevel(s.food_percent);
+      if (s.last_feed_time) el.lastFeedTime.textContent = s.last_feed_time.split(' ')[1] || s.last_feed_time;
+      if (typeof s.wifi_rssi === 'number') el.wifiRssi.textContent = s.wifi_rssi + ' dBm';
+      el.lastSync.textContent = formatTime(new Date());
+    });
+
+    db.ref('/feeder/config/portion_grams').on('value', snap => {
+      if (snap.exists()) el.portionText.textContent = snap.val();
+    });
+
+    db.ref('/feeder/schedule').on('value', snap => {
+      const raw = snap.val() || [];
+      const times = raw.filter(Boolean).map(t => ({h:t.hour, m:t.minute}));
+      const now = new Date();
+      const nowMinutes = now.getHours()*60 + now.getMinutes();
+      const doneFlags = times.map(t => (t.h*60+t.m) < nowMinutes);
+      renderSchedule(times, doneFlags, now);
+    });
+
+    el.feedBtn.addEventListener('click', () => {
+      el.feedBtn.disabled = true;
+      el.feedBtnLabel.textContent = 'กำลังส่งคำสั่ง…';
+      db.ref('/feeder/commands/feed_now').set(true).finally(() => {
+        setTimeout(() => {
+          el.feedBtn.disabled = false;
+          el.feedBtnLabel.textContent = 'ให้อาหารตอนนี้';
+        }, 1500);
+      });
+    });
+  };
+
+  document.head.appendChild(script1);
+  script1.onload = () => document.head.appendChild(script2);
+}
+
+if (isConfigured) {
+  startFirebaseMode();
+} else {
+  startDemoMode();
+}
+</script>
 </body>
 </html>
